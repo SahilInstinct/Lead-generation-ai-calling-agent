@@ -1,0 +1,34 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Logs
+logs/
+*.log
+
+# Runtime Lead & Call Data (keep directories, exclude collected data)
+data/leads/*.json
+data/leads/*.csv
+data/calls/*.json
+data/transcripts/*.json
+
+# IDEs & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

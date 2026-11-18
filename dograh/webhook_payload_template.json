@@ -1,0 +1,39 @@
+{
+  "source": "dograh",
+  "status": "completed",
+  "call_id": "{{initial_context.call_id}}",
+  "campaign_id": "{{initial_context.campaign_id}}",
+  "workflow_run_id": "{{workflow_run_id}}",
+  "duration_seconds": "{{cost_info.call_duration_seconds}}",
+  "recording_url": "{{recording_url}}",
+  "transcript_url": "{{transcript_url}}",
+  "initial_context": {
+    "call_id": "{{initial_context.call_id}}",
+    "phone_number": "{{initial_context.phone_number}}",
+    "owner_name": "{{initial_context.owner_name}}",
+    "pg_name": "{{initial_context.pg_name}}",
+    "campaign_id": "{{initial_context.campaign_id}}"
+  },
+  "gathered_context": {
+    "call_disposition": "{{gathered_context.call_disposition}}",
+    "owner_name": "{{gathered_context.owner_name}}",
+    "owner_role": "{{gathered_context.owner_role}}",
+    "pg_name": "{{gathered_context.pg_name}}",
+    "confirmed_phone_number": "{{gathered_context.confirmed_phone_number}}",
+    "contact_number_confirmed": "{{gathered_context.contact_number_confirmed}}",
+    "city": "{{gathered_context.city}}",
+    "locality": "{{gathered_context.locality}}",
+    "total_rooms": "{{gathered_context.total_rooms}}",
+    "available_rooms": "{{gathered_context.available_rooms}}",
+    "interested": "{{gathered_context.interested}}",
+    "listing_free_explained": "{{gathered_context.listing_free_explained}}",
+    "follow_up_required": "{{gathered_context.follow_up_required}}",
+    "follow_up_day": "{{gathered_context.follow_up_day}}",
+    "follow_up_time": "{{gathered_context.follow_up_time}}",
+    "communication_consent": "{{gathered_context.communication_consent}}",
+    "do_not_call": "{{gathered_context.do_not_call}}",
+    "objections": "{{gathered_context.objections}}",
+    "additional_questions": "{{gathered_context.additional_questions}}",
+    "additional_notes": "{{gathered_context.additional_notes}}"
+  }
+}
