@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ApkaPG AI Outbound Calling Console</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --border: #dfe4ec;
+      --text: #1b2430;
+      --muted: #5c6778;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success-bg: #e7f8ee;
+      --success-text: #137333;
+      --warn-bg: #fef4e6;
+      --warn-text: #b45309;
+      --danger-bg: #fdecec;
+      --danger-text: #b91c1c;
+      --info-bg: #ebf2fe;
+      --info-text: #1e40af;
+      --neutral-bg: #eef1f5;
+      --neutral-text: #475569;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .subtitle {
+      margin: 2px 0 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: var(--neutral-bg);
+      color: var(--neutral-text);
+    }
+    .pill.ok { background: var(--success-bg); color: var(--success-text); }
+    .pill.warn { background: var(--warn-bg); color: var(--warn-text); }
+    .pill.err { background: var(--danger-bg); color: var(--danger-text); }
+    .pill.info { background: var(--info-bg); color: var(--info-text); }
+
+    .grid-top {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-top { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 18px;
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 1.05rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    .field { display: flex; flex-direction: column; gap: 4px; }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    input, select {
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 0.9rem;
+      background: #fff;
+      color: var(--text);
+    }
+    input:focus, select:focus {
+      outline: 2px solid rgba(37, 99, 235, 0.25);
+      border-color: var(--primary);
+    }
+
+    button, .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 14px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      background: var(--neutral-bg);
+      color: var(--text);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-outline {
+      background: #fff;
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover { background: var(--bg); }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 0.78rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .stat-label { font-size: 0.78rem; color: var(--muted); }
+    .stat-value { font-size: 1.5rem; font-weight: 700; margin-top: 2px; }
+
+    .alert {
+      padding: 10px 12px;
+      border-radius: 7px;
+      font-size: 0.86rem;
+      margin-top: 12px;
+      display: none;
+    }
+    .alert.show { display: block; }
+    .alert.ok { background: var(--success-bg); color: var(--success-text); }
+    .alert.err { background: var(--danger-bg); color: var(--danger-text); }
+    .alert.info { background: var(--info-bg); color: var(--info-text); }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      padding: 7px 14px;
+      border-radius: 7px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--info-bg);
+      color: var(--info-text);
+      border-color: #c7d9fc;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      background: #fff;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    th {
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 0.77rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbfd; }
+
+    .empty {
+      text-align: center;
+      padding: 28px;
+      color: var(--muted);
+    }
+
+    dialog {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0;
+      max-width: 680px;
+      width: 92%;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    }
+    dialog::backdrop { background: rgba(15, 23, 42, 0.45); }
+    .modal-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+    }
+    .modal-body {
+      padding: 16px 18px;
+      max-height: 70vh;
+      overflow: auto;
+    }
+    pre {
+      margin: 0;
+      background: var(--bg);
+      padding: 12px;
+      border-radius: 7px;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>ApkaPG AI Outbound Calling Console</h1>
+        <p class="subtitle">Initiate PG owner calls via Dograh AI &amp; Vobiz and export collected leads</p>
+      </div>
+      <div class="status-bar">
+        <span id="modePill" class="pill">Checking mode...</span>
+        <span id="dograhPill" class="pill">Dograh: ...</span>
+        <span id="vobizPill" class="pill">Vobiz: ...</span>
+        <button id="refreshAllBtn" class="btn btn-outline btn-sm" type="button">Refresh</button>
+        <a class="btn btn-outline btn-sm" href="/docs" target="_blank" rel="noopener">API Docs</a>
+      </div>
+    </header>
+
+    <div class="grid-top">
+      <section class="card" style="margin-bottom:0;">
+        <h2>Initiate Outbound Call</h2>
+        <form id="callForm">
+          <div class="form-grid">
+            <div class="field">
+              <label for="phoneInput">Phone Number *</label>
+              <input id="phoneInput" type="text" placeholder="e.g. 9876543210 or +919876543210" required />
+            </div>
+            <div class="field">
+              <label for="ownerInput">Owner Name (optional)</label>
+              <input id="ownerInput" type="text" placeholder="Leave blank for agent to ask" />
+            </div>
+            <div class="field">
+              <label for="pgInput">PG Name (optional)</label>
+              <input id="pgInput" type="text" placeholder="Leave blank for agent to ask" />
+            </div>
+            <div class="field">
+              <label for="campaignInput">Campaign ID (optional)</label>
+              <input id="campaignInput" type="text" placeholder="e.g. blr-nov" />
+            </div>
+          </div>
+          <div class="actions">
+            <button id="callSubmitBtn" class="btn btn-primary" type="submit">Start Outbound Call</button>
+          </div>
+          <div id="callBanner" class="alert" role="status"></div>
+        </form>
+      </section>
+
+      <section class="card" style="margin-bottom:0;">
+        <h2>Overview</h2>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">Total Calls</div>
+            <div id="statCalls" class="stat-value">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Saved Leads</div>
+            <div id="statLeads" class="stat-value">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Owner / Manager Confirmed</div>
+            <div id="statRoles" class="stat-value">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Opt-Outs (Do Not Call)</div>
+            <div id="statDnc" class="stat-value">0</div>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:16px;">
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+            <input id="autoRefreshChk" type="checkbox" /> Auto-refresh every 10s
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="tabs">
+        <button id="tabLeadsBtn" class="tab-btn active" type="button">Collected Leads</button>
+        <button id="tabCallsBtn" class="tab-btn" type="button">Call History</button>
+      </div>
+
+      <div id="leadsPanel">
+        <div class="toolbar">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <label for="outcomeFilter">Outcome:</label>
+            <select id="outcomeFilter">
+              <option value="">All Outcomes</option>
+              <option value="interested">Interested</option>
+              <option value="not_interested">Not Interested</option>
+              <option value="callback_requested">Callback Requested</option>
+              <option value="opt_out">Opt-Out (DNC)</option>
+              <option value="wrong_number">Wrong Number</option>
+              <option value="unsure">Unsure</option>
+              <option value="call_not_connected">Call Not Connected</option>
+              <option value="unknown">Unknown / Role Check Only</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a id="exportJsonLink" class="btn btn-outline btn-sm" href="/api/leads/export/json">Download JSON</a>
+            <a id="exportCsvLink" class="btn btn-outline btn-sm" href="/api/leads/export/csv">Download CSV</a>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Call ID</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Owner Name</th>
+                <th>PG Name</th>
+                <th>Outcome</th>
+                <th>DNC</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="leadsTableBody">
+              <tr><td colspan="10" class="empty">Loading leads...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="callsPanel" style="display:none;">
+        <div id="syncBanner" class="alert" style="margin-top:0;margin-bottom:12px;"></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Call ID</th>
+                <th>Phone</th>
+                <th>Owner / PG</th>
+                <th>Dograh Run ID</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="callsTableBody">
+              <tr><td colspan="8" class="empty">Loading calls...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <dialog id="detailDialog">
+    <div class="modal-head">
+      <span id="detailTitle">Record Details</span>
+      <button id="closeDialogBtn" class="btn btn-outline btn-sm" type="button">Close</button>
+    </div>
+    <div class="modal-body">
+      <pre id="detailContent"></pre>
+    </div>
+  </dialog>
+
+  <script>
+    function esc(value) {
+      if (value === null || value === undefined) return "";
+      const div = document.createElement("div");
+      div.textContent = String(value);
+      return div.innerHTML;
+    }
+
+    function showBanner(el, type, message) {
+      el.className = `alert show ${type}`;
+      el.textContent = message;
+    }
+
+    function hideBanner(el) {
+      el.className = "alert";
+      el.textContent = "";
+    }
+
+    function statusPill(text, variant = "") {
+      return `<span class="pill ${variant}">${esc(text)}</span>`;
+    }
+
+    function outcomeVariant(outcome) {
+      if (outcome === "interested") return "ok";
+      if (outcome === "callback_requested" || outcome === "unsure") return "warn";
+      if (outcome === "opt_out" || outcome === "wrong_number" || outcome === "call_not_connected") return "err";
+      if (outcome === "not_interested") return "info";
+      return "";
+    }
+
+    function callStatusVariant(status) {
+      if (status === "completed" || status === "answered") return "ok";
+      if (status === "ringing" || status === "initiated" || status === "in_progress") return "info";
+      if (status === "busy" || status === "unanswered") return "warn";
+      if (status === "failed" || status === "canceled") return "err";
+      return "";
+    }
+
+    function formatDuration(sec) {
+      if (sec === null || sec === undefined) return "-";
+      return `${sec}s`;
+    }
+
+    function formatDate(iso) {
+      if (!iso) return "-";
+      const d = new Date(iso);
+      return Number.isNaN(d.getTime()) ? esc(iso) : d.toLocaleString();
+    }
+
+    async function fetchJson(url, options = {}) {
+      const res = await fetch(url, options);
+      const rawText = await res.text();
+      let data = null;
+      try {
+        data = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        data = { detail: rawText };
+      }
+      if (!res.ok) {
+        const msg = (data && data.detail) ? data.detail : `HTTP ${res.status}`;
+        const err = new Error(msg);
+        err.status = res.status;
+        throw err;
+      }
+      return data;
+    }
+
+    async function loadSystemStatus() {
+      const modePill = document.getElementById("modePill");
+      const dograhPill = document.getElementById("dograhPill");
+      const vobizPill = document.getElementById("vobizPill");
+      try {
+        const s = await fetchJson("/api/system/status");
+        if (s.mock_providers) {
+          modePill.className = "pill warn";
+          modePill.textContent = "MOCK MODE";
+        } else {
+          modePill.className = "pill ok";
+          modePill.textContent = "LIVE MODE";
+        }
+
+        const reachable = s.dograh && s.dograh.health && s.dograh.health.reachable;
+        dograhPill.className = reachable ? "pill ok" : "pill err";
+        dograhPill.textContent = reachable ? "Dograh: Reachable" : "Dograh: Unreachable";
+
+        vobizPill.className = "pill info";
+        vobizPill.textContent = `Vobiz: ${(s.vobiz && s.vobiz.mode) || "unknown"}`;
+      } catch (err) {
+        modePill.className = "pill err";
+        modePill.textContent = "Backend Error";
+      }
+    }
+
+    function updateExportLinks() {
+      const outcome = document.getElementById("outcomeFilter").value;
+      const qs = outcome ? `?outcome=${encodeURIComponent(outcome)}` : "";
+      document.getElementById("exportJsonLink").href = `/api/leads/export/json${qs}`;
+      document.getElementById("exportCsvLink").href = `/api/leads/export/csv${qs}`;
+    }
+
+    async function loadLeads() {
+      const outcome = document.getElementById("outcomeFilter").value;
+      updateExportLinks();
+      const qs = outcome ? `?outcome=${encodeURIComponent(outcome)}` : "";
+      const tbody = document.getElementById("leadsTableBody");
+
+      try {
+        const data = await fetchJson(`/api/leads${qs}`);
+        const leads = data.leads || [];
+
+        if (!outcome) {
+          document.getElementById("statLeads").textContent = leads.length;
+          const roleConfirmed = leads.filter(l => {
+            const role = (l.owner_role || "").toLowerCase();
+            return role === "owner" || role === "manager";
+          }).length;
+          document.getElementById("statRoles").textContent = roleConfirmed;
+          document.getElementById("statDnc").textContent = leads.filter(l => l.do_not_call).length;
+        }
+
+        if (leads.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="10" class="empty">No leads recorded yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = leads.map((lead) => `
+          <tr>
+            <td><strong>${esc(lead.call_id)}</strong></td>
+            <td>${esc(lead.phone_number || "-")}</td>
+            <td>${lead.owner_role ? statusPill(lead.owner_role, "info") : "-"}</td>
+            <td>${esc(lead.owner_name || "-")}</td>
+            <td>${esc(lead.pg_name || "-")}</td>
+            <td>${statusPill(lead.outcome || "unknown", outcomeVariant(lead.outcome))}</td>
+            <td>${lead.do_not_call ? statusPill("DNC", "err") : "-"}</td>
+            <td>${esc(lead.call_status || "-")}</td>
+            <td>${formatDuration(lead.call_duration_seconds)}</td>
+            <td>
+              <button class="btn btn-outline btn-sm" type="button" onclick='openDetail("Lead ${esc(lead.call_id)}", ${JSON.stringify(lead)})'>View</button>
+            </td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="10" class="empty">Failed to load leads: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    async function loadCalls() {
+      const tbody = document.getElementById("callsTableBody");
+      try {
+        const data = await fetchJson("/api/calls");
+        const calls = data.calls || [];
+        document.getElementById("statCalls").textContent = calls.length;
+
+        if (calls.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="empty">No calls initiated yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = calls.map((call) => {
+          const contextLabel = [call.owner_name, call.pg_name].filter(Boolean).join(" / ") || "-";
+          return `
+            <tr>
+              <td><strong>${esc(call.call_id)}</strong></td>
+              <td>${esc(call.phone_number)}</td>
+              <td>${esc(contextLabel)}</td>
+              <td>${esc(call.workflow_session_id || "-")}</td>
+              <td>${statusPill(call.status, callStatusVariant(call.status))}</td>
+              <td>${formatDuration(call.duration_seconds)}</td>
+              <td>${formatDate(call.updated_at)}</td>
+              <td style="display:flex;gap:6px;">
+                <button class="btn btn-outline btn-sm" type="button" onclick='syncCall("${esc(call.call_id)}")'>Sync</button>
+                <button class="btn btn-outline btn-sm" type="button" onclick='openDetail("Call ${esc(call.call_id)}", ${JSON.stringify(call)})'>Events</button>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty">Failed to load calls: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    async function syncCall(callId) {
+      const banner = document.getElementById("syncBanner");
+      showBanner(banner, "info", `Syncing ${callId} from Dograh...`);
+      try {
+        const updated = await fetchJson(`/ui/calls/${encodeURIComponent(callId)}/sync`, {
+          method: "POST",
+        });
+        showBanner(banner, "ok", `Synced ${callId}: status is "${updated.status}".`);
+        await refreshAll();
+      } catch (err) {
+        showBanner(banner, "err", `Sync failed for ${callId}: ${err.message}`);
+      }
+    }
+
+    function openDetail(title, payload) {
+      document.getElementById("detailTitle").textContent = title;
+      document.getElementById("detailContent").textContent = JSON.stringify(payload, null, 2);
+      document.getElementById("detailDialog").showModal();
+    }
+
+    document.getElementById("closeDialogBtn").addEventListener("click", () => {
+      document.getElementById("detailDialog").close();
+    });
+
+    document.getElementById("callForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("callSubmitBtn");
+      const banner = document.getElementById("callBanner");
+      hideBanner(banner);
+
+      const payload = {
+        phone_number: document.getElementById("phoneInput").value.trim(),
+        owner_name: document.getElementById("ownerInput").value.trim() || null,
+        pg_name: document.getElementById("pgInput").value.trim() || null,
+        campaign_id: document.getElementById("campaignInput").value.trim() || null,
+      };
+
+      btn.disabled = true;
+      btn.textContent = "Initiating...";
+      try {
+        const data = await fetchJson("/ui/calls/initiate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const call = data.call;
+        showBanner(
+          banner,
+          "ok",
+          `Call initiated: ${call.call_id} (status: ${call.status}, run: ${call.workflow_session_id || "n/a"})`
+        );
+        document.getElementById("phoneInput").value = "";
+        await refreshAll();
+      } catch (err) {
+        showBanner(banner, "err", `Could not initiate call: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Start Outbound Call";
+      }
+    });
+
+    // Tabs
+    const tabLeadsBtn = document.getElementById("tabLeadsBtn");
+    const tabCallsBtn = document.getElementById("tabCallsBtn");
+    const leadsPanel = document.getElementById("leadsPanel");
+    const callsPanel = document.getElementById("callsPanel");
+
+    tabLeadsBtn.addEventListener("click", () => {
+      tabLeadsBtn.classList.add("active");
+      tabCallsBtn.classList.remove("active");
+      leadsPanel.style.display = "block";
+      callsPanel.style.display = "none";
+    });
+
+    tabCallsBtn.addEventListener("click", () => {
+      tabCallsBtn.classList.add("active");
+      tabLeadsBtn.classList.remove("active");
+      leadsPanel.style.display = "none";
+      callsPanel.style.display = "block";
+    });
+
+    document.getElementById("outcomeFilter").addEventListener("change", loadLeads);
+    document.getElementById("refreshAllBtn").addEventListener("click", refreshAll);
+
+    let autoTimer = null;
+    document.getElementById("autoRefreshChk").addEventListener("change", (e) => {
+      if (e.target.checked) {
+        autoTimer = setInterval(refreshAll, 10000);
+      } else if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+      }
+    });
+
+    async function refreshAll() {
+      await Promise.all([loadSystemStatus(), loadLeads(), loadCalls()]);
+    }
+
+    refreshAll();
+  </script>
+</body>
+</html>

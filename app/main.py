@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.calls import router as calls_router
 from app.api.leads import router as leads_router
+from app.api.ui import router as ui_router
 from app.api.webhooks import router as webhooks_router
 from app.config import Settings, get_settings
 from app.services.dograh_service import DograhService
@@ -57,7 +58,7 @@ def create_app() -> FastAPI:
             "Backend API for initiating AI outbound calls to PG owners via Dograh AI "
             "and Vobiz, collecting structured lead data locally in JSON and CSV."
         ),
-        version="0.3.0",
+        version="0.4.0",
         lifespan=lifespan,
     )
 
@@ -130,6 +131,7 @@ def create_app() -> FastAPI:
 
     # Register webhooks_router before calls_router so /api/calls/webhook
     # never matches /api/calls/{call_id} on GET requests.
+    application.include_router(ui_router)
     application.include_router(webhooks_router)
     application.include_router(calls_router)
     application.include_router(leads_router)
