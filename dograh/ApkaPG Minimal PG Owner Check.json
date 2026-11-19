@@ -1,0 +1,289 @@
+{
+  "name": "ApkaPG Minimal PG Owner Check",
+  "workflow_definition": {
+    "nodes": [
+      {
+        "id": "global-1",
+        "type": "globalNode",
+        "position": {
+          "x": -184.32367149758454,
+          "y": 360.13526570048305
+        },
+        "data": {
+          "name": "Minimal Guardrails",
+          "prompt": "Speak in 1 short sentence per turn (max 15 words). Be polite and natural.\nDo NOT ask about city, locality, rooms, rent, pricing, or callbacks.\nDo NOT pitch features or invent anything about ApkaPG.\nOnly ask the exact question for the current node nothing extra and as soon as those questions are asked you get the response switch to the next node\nIf the caller says they are not a PG owner/manager, or asks not to be called again, apologize briefly and end the call.",
+          "allow_interrupt": false,
+          "invalid": false,
+          "validationMessage": null
+        },
+        "measured": {
+          "width": 400,
+          "height": 219
+        },
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "1",
+        "type": "startCall",
+        "position": {
+          "x": 483.2571280798477,
+          "y": 60
+        },
+        "data": {
+          "name": "Node-1 : Confirm PG Owner or Manager",
+          "greeting": "Hello! This is Jatin Bakshi calling from ApkaPG. Am I speaking with a PG owner or manager?",
+          "greeting_type": "text",
+          "prompt": "Wait for the caller to confirm whether they are a PG owner or manager. Do not explain anything else. Keep any reply to 1 short sentence.",
+          "allow_interrupt": true,
+          "add_global_prompt": true,
+          "delayed_start": false,
+          "delayed_start_duration": 1,
+          "pre_call_fetch_mode": "disabled",
+          "extraction_enabled": true,
+          "extraction_variables": [
+            {
+              "name": "owner_role",
+              "type": "string",
+              "prompt": "One of: owner, manager, neither, or empty string if unclear"
+            },
+            {
+              "name": "call_disposition",
+              "type": "string",
+              "prompt": "opt_out if asked not to call, wrong_number if caller is not a PG owner or manager, else empty string"
+            },
+            {
+              "name": "do_not_call",
+              "type": "boolean",
+              "prompt": "True only if caller explicitly asked not to receive further calls"
+            },
+            {
+              "name": "outcome",
+              "type": "string",
+              "prompt": "Interested If the user says yes to he is a pg owner or manager, else unknown"
+            }
+          ],
+          "allow_greeting_interrupt": false,
+          "greeting_interrupt_min_words": 2,
+          "is_start": true,
+          "invalid": false,
+          "validationMessage": null
+        },
+        "measured": {
+          "width": 400,
+          "height": 174
+        },
+        "selected": true,
+        "dragging": false
+      },
+      {
+        "id": "2",
+        "type": "agentNode",
+        "position": {
+          "x": 872.4642406352257,
+          "y": 372.64369843272084
+        },
+        "data": {
+          "name": "Node-2 : Ask Name and PG Name",
+          "prompt": "Ask ONLY for these two details, one at a time:\n1) Their full name (skip if {{initial_context.owner_name}} is already known)\n2) Their PG name (skip if {{initial_context.pg_name}} is already known)\nDo not ask any other question than the full name and pg name and after asking both questions switch to next node\nDo NOT ask for city, rooms, or anything else. Keep each question under 10 words.",
+          "allow_interrupt": true,
+          "add_global_prompt": true,
+          "extraction_enabled": true,
+          "extraction_variables": [
+            {
+              "name": "owner_role",
+              "type": "string",
+              "prompt": "owner or manager if stated, else empty string"
+            },
+            {
+              "name": "owner_name",
+              "type": "string",
+              "prompt": "Caller's full name if stated, else empty string"
+            },
+            {
+              "name": "pg_name",
+              "type": "string",
+              "prompt": "Name of the PG property if stated, else empty string"
+            },
+            {
+              "name": "additional_notes",
+              "type": "string",
+              "prompt": "Any brief remark mentioned by the caller, else empty string"
+            }
+          ],
+          "invalid": false,
+          "validationMessage": null
+        },
+        "measured": {
+          "width": 400,
+          "height": 219
+        },
+        "selected": false,
+        "dragging": false
+      },
+      {
+        "id": "3",
+        "type": "endCall",
+        "position": {
+          "x": 480,
+          "y": 720
+        },
+        "data": {
+          "name": "Node-3 : Thank & End Call",
+          "add_global_prompt": false,
+          "prompt": "Say one short polite sentence thanking them for confirming, then end the call immediately.\n",
+          "extraction_enabled": true,
+          "extraction_variables": [
+            {
+              "name": "owner_role",
+              "type": "string",
+              "prompt": "One of: owner, manager, neither, or empty string if unclear"
+            },
+            {
+              "name": "owner_name",
+              "type": "string",
+              "prompt": "Caller's full name if stated, else empty string"
+            },
+            {
+              "name": "pg_name",
+              "type": "string",
+              "prompt": "Name of the PG property if stated, else empty string"
+            },
+            {
+              "name": "call_disposition",
+              "type": "string",
+              "prompt": "opt_out if asked not to call, wrong_number if not a PG owner/manager, else empty string"
+            },
+            {
+              "name": "do_not_call",
+              "type": "boolean",
+              "prompt": "True only if caller explicitly asked not to receive further calls"
+            },
+            {
+              "name": "additional_notes",
+              "type": "string",
+              "prompt": "Any brief remark mentioned by the caller, else empty string"
+            }
+          ],
+          "allow_interrupt": false,
+          "is_end": true,
+          "invalid": false,
+          "validationMessage": null
+        },
+        "measured": {
+          "width": 400,
+          "height": 151
+        },
+        "selected": false
+      },
+      {
+        "id": "4",
+        "type": "webhook",
+        "position": {
+          "x": 920,
+          "y": 720
+        },
+        "data": {
+          "name": "Webhook",
+          "enabled": true,
+          "http_method": "POST",
+          "endpoint_url": "http://host.docker.internal:8001/api/calls/webhook",
+          "credential_uuid": "",
+          "custom_headers": [
+            {
+              "key": "X-Webhook-Secret",
+              "value": "apkapg-dograh-webhook-9876"
+            }
+          ],
+          "payload_template": {
+            "source": "dograh",
+            "status": "completed",
+            "call_id": "{{initial_context.call_id}}",
+            "campaign_id": "{{initial_context.campaign_id}}",
+            "workflow_run_id": "{{workflow_run_id}}",
+            "duration_seconds": "{{cost_info.call_duration_seconds}}",
+            "recording_url": "{{recording_url}}",
+            "transcript_url": "{{transcript_url}}",
+            "initial_context": {
+              "call_id": "{{initial_context.call_id}}",
+              "phone_number": "{{initial_context.phone_number}}",
+              "owner_name": "{{initial_context.owner_name}}",
+              "pg_name": "{{initial_context.pg_name}}",
+              "campaign_id": "{{initial_context.campaign_id}}"
+            },
+            "gathered_context": {
+              "call_disposition": "{{gathered_context.call_disposition}}",
+              "owner_name": "{{gathered_context.owner_name}}",
+              "owner_role": "{{gathered_context.owner_role}}",
+              "pg_name": "{{gathered_context.pg_name}}",
+              "do_not_call": "{{gathered_context.do_not_call}}",
+              "additional_notes": "{{gathered_context.additional_notes}}"
+            }
+          },
+          "invalid": false,
+          "allow_interrupt": false,
+          "validationMessage": null
+        },
+        "measured": {
+          "width": 320,
+          "height": 150
+        },
+        "selected": false
+      }
+    ],
+    "edges": [
+      {
+        "id": "1-2",
+        "type": "custom",
+        "animated": true,
+        "source": "1",
+        "target": "2",
+        "data": {
+          "condition": "As soon as user say Yes",
+          "label": "Owner or Manager",
+          "transition_speech_type": "text",
+          "invalid": false,
+          "validationMessage": null
+        },
+        "selected": false
+      },
+      {
+        "id": "1-3",
+        "type": "custom",
+        "animated": true,
+        "source": "1",
+        "target": "3",
+        "data": {
+          "label": "Not PG Owner / Opt-Out",
+          "condition": "Caller says they are NOT a PG owner or manager, wrong number, busy, or asks not to be called again.",
+          "transition_speech_type": "text",
+          "invalid": false,
+          "validationMessage": null
+        },
+        "selected": false
+      },
+      {
+        "animated": true,
+        "type": "custom",
+        "source": "2",
+        "sourceHandle": null,
+        "target": "3",
+        "targetHandle": null,
+        "id": "2-3",
+        "data": {
+          "condition": "after asking two question and getting the response",
+          "label": "End the call",
+          "transition_speech_type": "text",
+          "invalid": false,
+          "validationMessage": null
+        },
+        "selected": false
+      }
+    ],
+    "viewport": {
+      "x": 199.09110820252687,
+      "y": 91.94509108286763,
+      "zoom": 0.6026958301119922
+    }
+  }
+}
