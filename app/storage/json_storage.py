@@ -1,4 +1,4 @@
-"""Safe JSON persistence for call history, leads, and call transcripts."""
+"""Safe JSON persistence for call history, leads, transcripts, and batches."""
 
 from datetime import datetime, timezone
 import json
@@ -6,12 +6,14 @@ from pathlib import Path
 import re
 from typing import Any
 
+from app.models.batch import BatchItemRecord, BatchRecord, BatchStatus
 from app.models.call import (
     CallEventEntry,
     CallInitiateRequest,
     CallRecord,
     CallStatus,
     TranscriptRecord,
+    TranscriptTurn,
 )
 from app.models.lead import LeadRecord
 from app.storage.file_lock import StorageError, atomic_write_text, file_lock
@@ -19,6 +21,7 @@ from app.utils.validators import normalize_phone_number
 
 
 _CALL_ID_PATTERN = re.compile(r"^CALL_(\d+)$")
+_BATCH_ID_PATTERN = re.compile(r"^BATCH_(\d+)$")
 
 
 def _read_json_list_unlocked(file_path: Path) -> list[dict[str, Any]]:
@@ -127,11 +130,7 @@ class CallJsonStorage:
         provider_call_id: str | None = None,
         workflow_session_id: str | None = None,
     ) -> tuple[CallRecord, bool]:
-        """Apply a call lifecycle event idempotently.
-
-        Returns (CallRecord, applied: bool). If event.event_key was already
-        processed, returns (existing_record, False) without modifying disk.
-        """
+        """Apply a call lifecycle event idempotently."""
         with file_lock(self.file_path):
             raw_items = _read_json_list_unlocked(self.file_path)
             for idx, item in enumerate(raw_items):
@@ -176,15 +175,6 @@ class CallJsonStorage:
             raw_items = _read_json_list_unlocked(self.file_path)
             for item in raw_items:
                 if item.get("provider_call_id") == provider_call_id:
-                    return CallRecord.model_validate(item)
-        return None
-
-    def get_by_workflow_session_id(self, workflow_session_id: str) -> CallRecord | None:
-        """Fetch a single call record by Dograh workflow_run_id / session ID."""
-        with file_lock(self.file_path):
-            raw_items = _read_json_list_unlocked(self.file_path)
-            for item in raw_items:
-                if item.get("workflow_session_id") == workflow_session_id:
                     return CallRecord.model_validate(item)
         return None
 
@@ -285,3 +275,74 @@ class TranscriptJsonStorage:
                 if item.get("call_id") == call_id:
                     return TranscriptRecord.model_validate(item)
         return None
+
+
+class BatchJsonStorage:
+    """JSON repository for sequential calling batches (data/batches/batches.json)."""
+
+    def __init__(self, file_path: Path) -> None:
+        self.file_path = file_path
+
+    def _next_batch_id(self, records: list[dict[str, Any]]) -> str:
+        max_num = 0
+        for item in records:
+            batch_id = str(item.get("batch_id", ""))
+            match = _BATCH_ID_PATTERN.match(batch_id)
+            if match:
+                max_num = max(max_num, int(match.group(1)))
+        return f"BATCH_{max_num + 1:04d}"
+
+    def create_batch(
+        self,
+        items: list[BatchItemRecord],
+        campaign_id: str | None = None,
+        delay_seconds: int = 3,
+    ) -> BatchRecord:
+        """Create and persist a new batch record."""
+        with file_lock(self.file_path):
+            raw_items = _read_json_list_unlocked(self.file_path)
+            batch_id = self._next_batch_id(raw_items)
+            now = datetime.now(timezone.utc)
+
+            record = BatchRecord(
+                batch_id=batch_id,
+                campaign_id=campaign_id,
+                status=BatchStatus.PENDING,
+                delay_seconds=delay_seconds,
+                items=items,
+                created_at=now,
+                updated_at=now,
+            )
+            raw_items.append(record.model_dump(mode="json"))
+            _write_json_list_unlocked(self.file_path, raw_items)
+            return record
+
+    def save_batch(self, batch: BatchRecord) -> BatchRecord:
+        """Persist updates to an existing batch record."""
+        with file_lock(self.file_path):
+            raw_items = _read_json_list_unlocked(self.file_path)
+            for idx, item in enumerate(raw_items):
+                if item.get("batch_id") == batch.batch_id:
+                    batch.updated_at = datetime.now(timezone.utc)
+                    raw_items[idx] = batch.model_dump(mode="json")
+                    _write_json_list_unlocked(self.file_path, raw_items)
+                    return batch
+
+        raise StorageError(f"Batch '{batch.batch_id}' not found.")
+
+    def get_by_batch_id(self, batch_id: str) -> BatchRecord | None:
+        """Fetch a single batch by batch_id."""
+        with file_lock(self.file_path):
+            raw_items = _read_json_list_unlocked(self.file_path)
+            for item in raw_items:
+                if item.get("batch_id") == batch_id:
+                    return BatchRecord.model_validate(item)
+        return None
+
+    def list_batches(self) -> list[BatchRecord]:
+        """Return all persisted batches ordered newest first."""
+        with file_lock(self.file_path):
+            raw_items = _read_json_list_unlocked(self.file_path)
+        records = [BatchRecord.model_validate(item) for item in raw_items]
+        records.sort(key=lambda r: r.created_at, reverse=True)
+        return records

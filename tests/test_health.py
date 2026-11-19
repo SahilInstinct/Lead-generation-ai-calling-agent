@@ -1,4 +1,4 @@
-"""Tests for Phase 1 application startup, configuration, and health endpoint."""
+"""Tests for application startup, configuration, and health endpoint."""
 
 from fastapi.testclient import TestClient
 
@@ -24,6 +24,7 @@ def test_health_endpoint_returns_healthy(tmp_path, monkeypatch):
         "leads_dir": True,
         "calls_dir": True,
         "transcripts_dir": True,
+        "batches_dir": True,
     }
     assert "timestamp" in body
 

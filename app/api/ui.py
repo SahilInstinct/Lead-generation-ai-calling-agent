@@ -6,8 +6,17 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import FileResponse
 
 from app.api.auth import get_calling_service
+from app.api.batches import BatchResponse, _to_response
 from app.api.calls import CallInitiateResponse
+from app.config import Settings, get_settings
+from app.models.batch import BatchCreateRequest
 from app.models.call import CallInitiateRequest, CallRecord
+from app.services.batch_service import (
+    BatchNotFoundError,
+    BatchRunnerManager,
+    BatchValidationError,
+    get_batch_manager,
+)
 from app.services.calling_service import (
     CallNotFoundError,
     CallingService,
@@ -22,12 +31,12 @@ _LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost", "testclient"}
 
 
 def require_local_dashboard_origin(request: Request) -> None:
-    """Allow dashboard-triggered calls only from localhost; remote callers must use /api/calls/* with X-API-Key."""
+    """Allow dashboard-triggered calls only from localhost; remote callers must use /api/* with X-API-Key."""
     client_host = request.client.host if request.client else ""
     if client_host not in _LOCAL_HOSTS:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Dashboard actions are restricted to localhost. Use /api/calls/* with X-API-Key.",
+            detail="Dashboard actions are restricted to localhost. Use /api/* with X-API-Key.",
         )
 
 
@@ -80,3 +89,73 @@ async def ui_sync_call(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except DograhError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
+@router.post(
+    "/ui/batches",
+    response_model=BatchResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_local_dashboard_origin)],
+)
+async def ui_create_batch(
+    payload: BatchCreateRequest,
+    settings: Settings = Depends(get_settings),
+    manager: BatchRunnerManager = Depends(get_batch_manager),
+) -> BatchResponse:
+    """Create and start a sequential batch from the local dashboard."""
+    try:
+        batch = manager.create_batch(settings=settings, request=payload)
+        return _to_response(batch)
+    except BatchValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+
+
+@router.post(
+    "/ui/batches/{batch_id}/pause",
+    response_model=BatchResponse,
+    dependencies=[Depends(require_local_dashboard_origin)],
+)
+async def ui_pause_batch(
+    batch_id: str,
+    settings: Settings = Depends(get_settings),
+    manager: BatchRunnerManager = Depends(get_batch_manager),
+) -> BatchResponse:
+    try:
+        return _to_response(manager.pause_batch(settings=settings, batch_id=batch_id))
+    except BatchNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post(
+    "/ui/batches/{batch_id}/resume",
+    response_model=BatchResponse,
+    dependencies=[Depends(require_local_dashboard_origin)],
+)
+async def ui_resume_batch(
+    batch_id: str,
+    settings: Settings = Depends(get_settings),
+    manager: BatchRunnerManager = Depends(get_batch_manager),
+) -> BatchResponse:
+    try:
+        return _to_response(manager.resume_batch(settings=settings, batch_id=batch_id))
+    except BatchNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post(
+    "/ui/batches/{batch_id}/stop",
+    response_model=BatchResponse,
+    dependencies=[Depends(require_local_dashboard_origin)],
+)
+async def ui_stop_batch(
+    batch_id: str,
+    settings: Settings = Depends(get_settings),
+    manager: BatchRunnerManager = Depends(get_batch_manager),
+) -> BatchResponse:
+    try:
+        return _to_response(manager.stop_batch(settings=settings, batch_id=batch_id))
+    except BatchNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

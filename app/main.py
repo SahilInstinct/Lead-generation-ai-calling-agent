@@ -9,11 +9,13 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from app.api.batches import router as batches_router
 from app.api.calls import router as calls_router
 from app.api.leads import router as leads_router
 from app.api.ui import router as ui_router
 from app.api.webhooks import router as webhooks_router
 from app.config import Settings, get_settings
+from app.services.batch_service import get_batch_manager
 from app.services.dograh_service import DograhService
 from app.services.vobiz_service import VobizService
 from app.utils.logger import get_logger, setup_logging
@@ -32,7 +34,7 @@ def _check_directory_writable(path) -> bool:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize logging and verify local storage directories on startup."""
+    """Initialize logging, verify storage directories, and shut down batch tasks cleanly."""
     settings: Settings = get_settings()
     setup_logging(level=settings.log_level, secrets=settings.get_secret_values())
     settings.ensure_data_dirs()
@@ -45,6 +47,7 @@ async def lifespan(app: FastAPI):
         settings.vobiz_mode,
     )
     yield
+    await get_batch_manager().shutdown()
     logger.info("Shutting down %s", settings.app_name)
 
 
@@ -58,7 +61,7 @@ def create_app() -> FastAPI:
             "Backend API for initiating AI outbound calls to PG owners via Dograh AI "
             "and Vobiz, collecting structured lead data locally in JSON and CSV."
         ),
-        version="0.4.0",
+        version="0.5.0",
         lifespan=lifespan,
     )
 
@@ -94,6 +97,7 @@ def create_app() -> FastAPI:
             "transcripts_dir": _check_directory_writable(
                 current_settings.transcripts_dir
             ),
+            "batches_dir": _check_directory_writable(current_settings.batches_dir),
         }
         all_healthy = all(storage_checks.values())
 
@@ -135,6 +139,7 @@ def create_app() -> FastAPI:
     application.include_router(webhooks_router)
     application.include_router(calls_router)
     application.include_router(leads_router)
+    application.include_router(batches_router)
 
     return application
 

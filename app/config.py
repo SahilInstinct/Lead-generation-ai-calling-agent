@@ -78,6 +78,10 @@ class Settings(BaseSettings):
         return self.data_dir / "transcripts"
 
     @property
+    def batches_dir(self) -> Path:
+        return self.data_dir / "batches"
+
+    @property
     def calls_history_file(self) -> Path:
         return self.calls_dir / "call_history.json"
 
@@ -93,6 +97,10 @@ class Settings(BaseSettings):
     def transcripts_json_file(self) -> Path:
         return self.transcripts_dir / "call_transcripts.json"
 
+    @property
+    def batches_json_file(self) -> Path:
+        return self.batches_dir / "batches.json"
+
     def ensure_data_dirs(self) -> None:
         """Create required local storage directories if they do not exist."""
         for directory in (
@@ -100,6 +108,7 @@ class Settings(BaseSettings):
             self.leads_dir,
             self.calls_dir,
             self.transcripts_dir,
+            self.batches_dir,
         ):
             directory.mkdir(parents=True, exist_ok=True)
 
