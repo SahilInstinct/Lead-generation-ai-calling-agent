@@ -32,6 +32,7 @@ class Settings(BaseSettings):
 
     # Security
     api_auth_key: str = Field(default="")
+    ui_allow_docker_bridge: bool = Field(default=False)
 
     # Local Storage
     data_dir: Path = Field(default=Path("data"))

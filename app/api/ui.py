@@ -1,5 +1,6 @@
 """Built-in operator dashboard routes (localhost-only actions without exposing API keys)."""
 
+import ipaddress
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -30,14 +31,27 @@ _STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 _LOCAL_HOSTS = {"127.0.0.1", "::1", "localhost", "testclient"}
 
 
-def require_local_dashboard_origin(request: Request) -> None:
-    """Allow dashboard-triggered calls only from localhost; remote callers must use /api/* with X-API-Key."""
+def require_local_dashboard_origin(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+) -> None:
+    """Allow dashboard-triggered calls from localhost (or Docker bridge in non-production)."""
     client_host = request.client.host if request.client else ""
-    if client_host not in _LOCAL_HOSTS:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Dashboard actions are restricted to localhost. Use /api/* with X-API-Key.",
-        )
+    if client_host in _LOCAL_HOSTS:
+        return
+
+    if settings.ui_allow_docker_bridge and settings.app_env != "production":
+        try:
+            ip = ipaddress.ip_address(client_host)
+            if ip.is_loopback or ip.is_private:
+                return
+        except ValueError:
+            pass
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Dashboard actions are restricted to localhost. Use /api/* with X-API-Key.",
+    )
 
 
 @router.get("/")

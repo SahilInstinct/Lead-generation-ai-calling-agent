@@ -6,7 +6,7 @@ import pytest
 from starlette.requests import Request
 
 from app.api.ui import require_local_dashboard_origin
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.main import create_app
 
 
@@ -19,21 +19,18 @@ def test_dashboard_root_and_no_key_initiate_sync(tmp_path, monkeypatch):
 
     app = create_app()
     with TestClient(app) as client:
-        # HTML dashboard loads with no secrets embedded
         home = client.get("/")
         assert home.status_code == 200
         assert "ApkaPG AI Outbound Calling Console" in home.text
         assert "strict-secret-key" not in home.text
         assert "/ui/calls/initiate" in home.text
 
-        # External API still enforces X-API-Key
         api_unauth = client.post(
             "/api/calls/initiate",
             json={"phone_number": "9876543210"},
         )
         assert api_unauth.status_code == 401
 
-        # Local dashboard route works without X-API-Key
         ui_init = client.post(
             "/ui/calls/initiate",
             json={"phone_number": "9876543210"},
@@ -58,6 +55,15 @@ def test_dashboard_actions_block_non_local_clients():
             "client": ("192.168.1.50", 54321),
         }
     )
+    default_settings = Settings(app_env="development", ui_allow_docker_bridge=False)
     with pytest.raises(HTTPException) as exc_info:
-        require_local_dashboard_origin(remote_request)
+        require_local_dashboard_origin(remote_request, settings=default_settings)
     assert exc_info.value.status_code == 403
+
+    docker_settings = Settings(app_env="development", ui_allow_docker_bridge=True)
+    require_local_dashboard_origin(remote_request, settings=docker_settings)
+
+    prod_settings = Settings(app_env="production", ui_allow_docker_bridge=True)
+    with pytest.raises(HTTPException) as prod_exc:
+        require_local_dashboard_origin(remote_request, settings=prod_settings)
+    assert prod_exc.value.status_code == 403

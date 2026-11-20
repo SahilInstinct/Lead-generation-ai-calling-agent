@@ -1,0 +1,18 @@
+services:
+  apkapg-backend:
+    build: .
+    container_name: apkapg-calling-backend
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    environment:
+      # Inside Docker, reach Dograh running on the host at port 8000
+      DOGRAH_API_BASE_URL: ${DOCKER_DOGRAH_API_BASE_URL:-http://host.docker.internal:8000}
+      # Allow browser requests coming through Docker Desktop's bridge gateway in local dev
+      UI_ALLOW_DOCKER_BRIDGE: ${UI_ALLOW_DOCKER_BRIDGE:-true}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

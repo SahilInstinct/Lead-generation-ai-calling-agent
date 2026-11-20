@@ -1,0 +1,26 @@
+[
+  {
+    "batch_id": "BATCH_0001",
+    "campaign_id": null,
+    "status": "completed",
+    "delay_seconds": 3,
+    "items": [
+      {
+        "row_number": 1,
+        "raw_phone": "8178056861",
+        "phone_number": "+918178056861",
+        "owner_name": null,
+        "pg_name": null,
+        "notes": null,
+        "status": "completed",
+        "call_id": "CALL_0025",
+        "error": null,
+        "updated_at": "2026-11-20T06:20:19.074851Z"
+      }
+    ],
+    "created_at": "2026-11-20T06:19:32.059565Z",
+    "updated_at": "2026-11-20T06:20:19.120045Z",
+    "started_at": "2026-11-20T06:19:32.097633Z",
+    "finished_at": "2026-11-20T06:20:19.109914Z"
+  }
+]
